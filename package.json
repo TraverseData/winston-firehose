@@ -1,0 +1,31 @@
+{
+  "name": "winston-firehose",
+  "version": "1.0.0",
+  "description": "Configurable log transport for Winston (~2.4) to write directly to Firehose",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "mocha test/**/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/traversedata/winston-firehose"
+  },
+  "author": "Sam Brown",
+  "license": "MIT",
+  "peerDependencies": {
+    "winston": "^2.0"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.651.0",
+    "bluebird": "^3.7.2",
+    "bluebird-retry": "^0.11.0",
+    "winston-transport": "^4.3.0"
+  },
+  "devDependencies": {
+    "expect": "^25.2.4",
+    "jshint": "^2.11.0",
+    "mocha": "^7.1.1",
+    "sinon": "^9.0.1",
+    "winston": "^2.4.4"
+  }
+}
