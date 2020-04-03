@@ -20,6 +20,7 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
     }
     setImmediate(() => this.emit('logged'));
     const log = this._formatLogObject(level, msg, meta);
+    console.log(log);
     return this.firehoseWrapper.send(log)
     .then(() => {
       if (callback) return callback();

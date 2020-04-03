@@ -23,10 +23,16 @@ module.exports = class FirehoseWrapper {
       }
     };
 
-    const _send = (params) => {
-      return this.firehose.putRecord(params).promise();
+    const _send = () => { // relies on scoped params because retry cannot pass arguments
+      return this.firehose.putRecord(params)
+        .tapCatch(err => {
+          console.log(err);
+        });
     };
 
-    return retry(_send(params), { max_tries: 4, backoff: 2);
+    return retry(_send, {max_tries: 4, backoff: 2})
+    .catch(err => {
+      console.log(`WinstonFirehose Error`, err);
+    });
   }
 };
