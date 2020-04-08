@@ -27,11 +27,15 @@ describe('WinstonFirehose', () =>{
           new (WinstonFirehose)({
             level: process.env.NODE_LOG_LEVEL || "verbose",
             sendLog: log => console.log(log),
+            streamName: 'winston-firehose-test-stream',
+            firehoseConfig: {region: 'us-east-1'},
             topLevelAttributes: ['message', 'method', 'creationtimestamp']
           }),
           new (WinstonFirehose)({
             level: "verbose",
             name: 'VerboseWinstonFirehose',
+            streamName: 'winston-firehose-test-stream',
+            firehoseConfig: {region: 'us-east-1'},
             sendLog: log => console.log(log),
             topLevelAttributes: ['someother', 'method', 'creationtimestamp']
           })
@@ -57,8 +61,9 @@ describe('WinstonFirehose', () =>{
       const transport = new WinstonFirehose({
         level: "verbose",
         name: 'VerboseWinstonFirehose',
-        streamName: 'someStream',
-        firehoseOptions: {region: 'us-east-1'},
+        streamName: 'winston-firehose-test-stream',
+        retryConfig: {},
+        firehoseConfig: {region: 'us-east-1'},
         topLevelAttributes: ['level', 'method', 'timestamp', 'foo']
       });
       transport.log('info', 'message', {something: 'attributes', foo: 'bar'});
@@ -68,8 +73,8 @@ describe('WinstonFirehose', () =>{
       const transport = new WinstonFirehose({
         level: "verbose",
         name: 'VerboseWinstonFirehose',
-        streamName: 'someStream',
-        firehoseOptions: {region: 'us-east-1'},
+        streamName: 'winston-firehose-test-stream',
+        firehoseConfig: {region: 'us-east-1'},
         topLevelAttributes: ['level', 'method', 'timestamp', 'foo']
       });
       transport.log('info', 'message', {meta: 'attributes', foo: 'bar'});

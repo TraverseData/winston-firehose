@@ -33,4 +33,7 @@ describe('FirehoseWrapper', () =>{
       });
     })
     .timeout(8000); // 4 requests with 2x backoff, 1000ms first backoff, should take 7 seconds
+
+    // todo: test setRetryConfig
+
 });
