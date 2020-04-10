@@ -7,14 +7,14 @@ const bluebird = require('bluebird');
 const FirehoseWrapper = require('../src/FirehoseWrapper.js');
 
 describe('FirehoseWrapper', () =>{
-  // not stubbing firehoseWrapper.putrecordpromise with sinon
-  // because we are stubbing differently for each test
+  // Not stubbing firehoseWrapper.putrecordpromise with sinon in a before or beforeAll
+  // because we are stubbing differently for each test and it needs to be
+  // instantiated first.
 
   it('calls firehose.putRecordPromise', () =>{
     // stub success
     let firehoseWrapper = new FirehoseWrapper('someStream', {region: 'us-east-1'});
 
-    // expects a .promise method to be exposed on the AWS API
     sinon.stub(firehoseWrapper.firehose, 'putRecordPromise').usingPromise(bluebird).resolves();
     return firehoseWrapper.send('{"timestamp":"2020-04-02T05:17:06.330Z","meta":{"meta":"attributes"},"foo":"bar","level":"info"}')
     .then(() => {
