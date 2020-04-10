@@ -4,21 +4,31 @@ const FirehoseWrapper = require('./FirehoseWrapper.js');
 const WinstonFirehose = class WinstonFirehose extends Transport {
   constructor(options) {
     super(options);
+    // Transport Name
     this.name = options.name || 'WinstonFirehose';
+
+    // Log Level
     this.level = options.level || 'info';
-    this.topLevelAttributes = options.topLevelAttributes || ['message', 'timestamp']; // todo: should level and message always be here?
+
+    // Attributes to be included at the root of the firehosed object. Everything else goes under the "meta" object attribute.
+    this.topLevelAttributes = options.topLevelAttributes || ['level', 'message', 'timestamp']; // todo: should level and message always be here?
+
+    // Allows for the same attribute to be logged with each message for a particular instance of the logger, i.e. application name or version
+    this.constants = {};
     this.formatter = options.formatter || JSON.stringify;
 
     const streamName = options.streamName;
     const firehoseConfig = options.firehoseConfig || {};
-    this.firehoseWrapper = new FirehoseWrapper(streamName, firehoseConfig);
+    // todo: throw error if streamName, firehoseConfig aren't defined
+    const retryConfig = options.retryConfig || {};
+    this.firehoseWrapper = new FirehoseWrapper(streamName, firehoseConfig, retryConfig);
   }
 
   log(level, msg, meta, callback) {
     if (this.silent) {
       return callback(null, true);
     }
-    setImmediate(() => this.emit('logged'));
+    setImmediate(() => this.emit('logged')); // winston wants this
     const log = this._formatLogObject(level, msg, meta);
     return this.firehoseWrapper.send(log)
     .then(() => {
@@ -27,7 +37,7 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
   }
 
   _formatLogObject(level, message, meta){
-    let logObject = Object.assign({ timestamp: (new Date()).toISOString() }, meta, {level, message});
+    let logObject = Object.assign({ timestamp: (new Date()).toISOString() }, meta, {level, message}, this.constants);
 
     // Ensure the log object has a meta property that is an actual object.
     // First, check for weird types that might get passed in.
@@ -41,6 +51,7 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
 
     const keys = Object.keys(logObject);
 
+    // assign top level attributes at top level, everything else within "meta" attribute
     keys.forEach(key => {
       if (this.topLevelAttributes.indexOf(key) === -1 && key !== 'meta'){
         logObject.meta[key] = logObject.key;

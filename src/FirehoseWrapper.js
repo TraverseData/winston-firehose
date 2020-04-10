@@ -6,10 +6,11 @@ const AWS = require('aws-sdk');
 AWS.config.setPromisesDependency(Promise);
 
 module.exports = class FirehoseWrapper {
-  constructor(streamName, options) {
+  constructor(streamName, firehoseOptions, retryConfig) {
     this.streamName = streamName;
-    this.firehose = new AWS.Firehose(options);
+    this.firehose = new AWS.Firehose(firehoseOptions, retryConfig);
     this.firehose.putRecordPromise = bluebird.promisify(this.firehose.putRecord);
+    this.retryConfig = Object.assign({max_tries: 4, backoff: 2}, retryConfig);
   }
 
   /**
@@ -24,15 +25,12 @@ module.exports = class FirehoseWrapper {
     };
 
     const _send = () => { // relies on scoped params because retry cannot pass arguments
-      // return this.firehose.putRecord(params);
       return this.firehose.putRecordPromise(params);
     };
 
-    return _send();
-
-    // return retry(_send, {max_tries: 1, backoff: 2})
-    // .catch(err => {
-    //   console.log(`WinstonFirehose Error`, err);
-    // });
+    return retry(_send, this.retryConfig)
+    .catch(err => {
+      console.log(`WinstonFirehose Error in FirehoseWrapper.send`, err);
+    });
   }
 };
