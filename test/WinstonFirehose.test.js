@@ -55,6 +55,7 @@ describe('WinstonFirehose', () =>{
     let checkAndParseLogString = (transport) => {
       let logString = transport.firehoseWrapper.send.getCall(0).args[0];
       expect(typeof logString).toEqual('string');
+      console.log(logString);
       return JSON.parse(logString);
     };
 
@@ -104,6 +105,26 @@ describe('WinstonFirehose', () =>{
       expectBasicLogAttributes(logData);
     });
 
+    it('does not fail when passed a circular reference', () =>{
+      // set up log transport
+      const transport = new WinstonFirehose({
+        level: "verbose",
+        name: 'VerboseWinstonFirehose',
+        streamName: 'winston-firehose-test-stream',
+        firehoseConfig: {region: 'us-east-1'},
+      });
+
+      // set up a basic circular reference (JSON.stringify would choke on this by default)
+      let circularList = [];
+      circularList[0] = circularList;
+      transport.log('info', 'some message', {circularList});
+
+      let logData = checkAndParseLogString(transport);
+      expectBasicLogAttributes(logData);
+      expect(logData.meta.circularList).not.toEqual(undefined);
+      expect(logData.meta.circularList[0]).not.toEqual(circularList);
+    });
+
     it('properly assigns meta attributes', () =>{
       let something = 'someValue';
       let foo = 'bar';
@@ -137,7 +158,7 @@ describe('WinstonFirehose', () =>{
       expect(logData.meta.req.params).toEqual(req.params);
     });
 
-    it('logs in the proper format even if a reserved word is accidentally used', () =>{
+    it('logs in the proper format even if a log parameter is passed in named "meta" and it is a string', () =>{
       let metaAttribute = 'metaValue';
       let foo = 'bar';
 
@@ -157,6 +178,25 @@ describe('WinstonFirehose', () =>{
       expect(logData.foo).toEqual(foo);
 
       // check that the meta attribute is properly nested
+      expect(logData.meta).not.toEqual(undefined);
+      expect(typeof logData.meta).toEqual('object');
+      expect(logData.meta.meta).toEqual(metaAttribute);
+    });
+
+    it('logs in the proper format even if a log parameter is passed in named "meta" and it is an object', () =>{
+      let metaAttribute = {so:'meta'};
+
+      const transport = new WinstonFirehose({
+        level: "verbose",
+        name: 'VerboseWinstonFirehose',
+        streamName: 'winston-firehose-test-stream',
+        firehoseConfig: {region: 'us-east-1'},
+        topLevelAttributes: ['message', 'level', 'method', 'timestamp']
+      });
+      transport.log('info', 'message', {meta: metaAttribute});
+      let logData = checkAndParseLogString(transport);
+
+      // check that the object passed as `meta` is properly nested
       expect(logData.meta).not.toEqual(undefined);
       expect(typeof logData.meta).toEqual('object');
       expect(logData.meta.meta).toEqual(metaAttribute);

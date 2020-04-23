@@ -15,7 +15,7 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
 
     // Allows for the same attribute to be logged with each message for a particular instance of the logger, i.e. application name or version
     this.constants = options.constants || {};
-    this.formatter = options.formatter || JSON.stringify;
+    this.formatter = options.formatter || this._defaultFormatter;
 
     const streamName = options.streamName;
     const firehoseConfig = options.firehoseConfig || {};
@@ -36,17 +36,47 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
     });
   }
 
+  /**
+   * default formatter for this log transport,
+   * @param  {[type]} logObject [description]
+   * @return {[type]}           [description]
+   */
+  _defaultFormatter(logObject){
+    // c.f. MSDN for handling circular references https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#Examples
+    const getCircularReplacer = () => {
+      const seen = new WeakSet();
+      return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        return value;
+      };
+    };
+
+    return JSON.stringify(logObject, getCircularReplacer());
+  }
+
+  /**
+   * Formats all available log details into a log object by assigning
+   *
+   * @throws {TypeError}  When using JSON.stringify as the formatter and passed an object with a circular reference
+   *
+   * @param  {[type]} level   [description]
+   * @param  {[type]} message [description]
+   * @param  {[type]} meta    [description]
+   * @return {[type]}         [description]
+   */
   _formatLogObject(level, message, meta){
     // gather up everything into one single object. constants overwrite everything.
     let logObject = Object.assign({ timestamp: (new Date()).toISOString() }, meta, {level, message}, this.constants);
 
-    // Ensure the log transport was properly passed the metadata as an object.
-    // First, check for weird types that might get passed in.
-    if (logObject.meta !== undefined && logObject.meta !== null
-      && (logObject.meta.length !== undefined || typeof logObject.meta !== 'object')) {
-      let metaValue = logObject.meta;
-      logObject.meta = {meta: metaValue};
-    } else if (!logObject.meta) { // All "surprise" falsy values should have already been caught, so we can be loose here
+    // Set up the meta attribute for population
+    if (logObject.meta !== undefined) {
+      logObject.meta = Object.assign({}, {meta: logObject.meta});
+    } else {
       logObject.meta = {};
     }
 
@@ -58,6 +88,7 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
         delete logObject[key];
       }
     });
+
     return this.formatter(logObject);
   }
 }
