@@ -20,7 +20,7 @@ module.exports = class FirehoseWrapper {
     const params = {
       DeliveryStreamName: this.streamName,
       Record: {
-        Data: message,
+        Data: message + '\n',
       }
     };
 
