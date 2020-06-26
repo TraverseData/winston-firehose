@@ -34,3 +34,4 @@ i.e.
 ## Notes
 - Failed logs are retried 4x with an exponential backoff.
 - This will not be able to log its own errors to firehose.
+- Expects to connect to firehose over HTTPS

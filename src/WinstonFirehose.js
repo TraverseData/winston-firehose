@@ -91,6 +91,6 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
 
     return this.formatter(logObject);
   }
-}
+};
 
 module.exports = WinstonFirehose;
