@@ -1,5 +1,6 @@
 const Transport = require('winston-transport');
 const FirehoseWrapper = require('./FirehoseWrapper.js');
+const util = require('util');
 
 const WinstonFirehose = class WinstonFirehose extends Transport {
   constructor(options) {
@@ -51,6 +52,10 @@ const WinstonFirehose = class WinstonFirehose extends Transport {
             return '[Circular]';
           }
           seen.add(value);
+        }
+
+        if (value instanceof Error){
+          return util.inspect(value);
         }
         return value;
       };
