@@ -21,7 +21,7 @@
     "aws-sdk": "^2.651.0",
     "bluebird": "^3.7.2",
     "bluebird-retry": "^0.11.0",
-    "winston-transport": "^4.3.0"
+    "winston-transport": "^4.5.0"
   },
   "devDependencies": {
     "expect": "^25.2.4",
